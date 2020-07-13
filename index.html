@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+		<script src="https://unpkg.com/vue/dist/vue.js"></script>
+		<!-- 引入组件库 -->
+		<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+		<style>
+			* {
+				box-sizing: border-box;
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+			:root {
+				/* 自定义属性变量，便于调整，使用变量方式：var(--gap) */
+				--bg_panel: #f3f3f3; 	/* 面板背景色 */
+				--gap: 8px; 	/* 选项间距 */
+			}
+			@keyframes fade_scale {
+				from{
+					opacity: 0;
+					height: 0;
+					transform: scale(0);
+				}
+				to{
+					opacity: 1;
+					height: 100vh;
+					transform: scale(1);
+				}
+			}
+			html, body { height: 100%; margin: 0; padding: 0; }
+			#app { height: 100%; }
+			.unit-filter-panel {
+				width: 320px; 
+				height: 100vh;
+				margin: 0 auto;
+				padding: 20px;
+				background: var(--bg_panel);
+				-webkit-border-radius: 10px;
+				-moz-border-radius: 10px;
+				border-radius: 10px;
+				animation: fade_scale .3s linear;
+				transform-origin: top left;
+			}
+			.el-collapse-item__header { font-weight: bold; height: 38px; }
+			.el-collapse-item__header::before {
+				content: ''; 
+				display: inline-block; 
+				width: 3px; 
+				height: 10px; 
+				margin: 0 5px 0 8px; 
+				background: steelblue; 
+			}
+			.el-collapse-item__content { padding-bottom: 0; }
+			.el-collapse-item__content .wrapper {
+				border-top: 1px solid #ebebeb;
+				padding-top: var(--gap);
+				padding-left: var(--gap);
+				overflow: hidden;
+			}
+			.el-collapse-item__content .wrapper > div {
+				float: left;
+				width: 46%;
+				margin-bottom: var(--gap);
+				padding: 0 8px;
+				text-overflow: ellipsis; 
+				white-space: nowrap;
+				overflow: hidden;
+				border: 1px solid #cecece;
+				text-align: center;
+				cursor: pointer;
+				-webkit-border-radius: 5px;
+				-moz-border-radius: 5px;
+				border-radius: 5px;
+			}
+			.el-collapse-item__content .wrapper > div:nth-of-type(2n-1) { margin-right: calc(var(--gap) / 2);) } /* 单数2n-1，即左侧选项 */
+			.el-collapse-item__content .wrapper > div:nth-of-type(2n) { margin-left: calc(var(--gap) / 2); } 	 /* 双数2n，即右侧选项 */
+			
+			.el-collapse-item__content .wrapper > div:hover { background: #f3f3f3; } /* 注意顺序。hover 应在 selected 之前 */
+			.el-collapse-item__content .wrapper > div.default_selected,
+			.el-collapse-item__content .wrapper > div.selected {
+				background: #dedede;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<div class="unit-filter-panel">
+				<el-collapse v-model="activeNames">
+				  <el-collapse-item
+						v-for="(item, key) in config" 
+						:key="key"
+						:title="item.name" 
+						:name="key">
+				    <div class="wrapper" @click.capture="filterChange">
+							<!-- 使用 data-valid 自定义属性, 初始化事件委托所需参数 -->
+							<div v-for="(inner_item, idx) in item.options"
+									 :key="key + idx"
+									 :data-valid="`${key} >> ${inner_item.id}`"
+									 :class="{
+											'default_selected': item.multipal && idx === 0 && !item.args.length, 
+											'selected': item.args.indexOf(inner_item.id) !== -1
+										}">
+								{{ inner_item.text }}
+							</div>
+						</div>
+				  </el-collapse-item>
+				</el-collapse>
+			</div>
+		</div>
+		
+		<script>
+		new Vue({
+		  el: '#app',
+		  data: {
+		    activeNames: ['time_period', 'state_id', 'proj_id'],
+				ajaxArgs: {}, // 最终传参
+				config: {
+					time_period: {
+						name: '时间段',	 // 折叠卡标题
+						multipal: false, // 是否多选
+						args: ['0.5'],	 // 存放折叠卡选中项 id, 当折叠卡是单选时, 数组只有一个值, 后续值将直接覆盖数组的唯一值
+						options: [			 // 折叠卡选项, id 须唯一; 当折叠卡设置为支持多选时, id 不设置值.
+							{ id: '0.5', text: '近半年' }, // 一些特殊的选项, 例如此处的时间段, id 最好有明显意义, 便于理解, 此处应该与后台商议
+							{ id: '1', text: '近一年' },
+							{ id: '3', text: '近三年' },
+							{ id: '5', text: '近五年' }
+						]
+					},
+					state_id: {
+						name: '项目状态',
+						multipal: true,
+						args: [],
+						options: [
+							{ text: '全部' },
+							{ id: '-3', text: '退回' },
+							{ id: '-1', text: '待提交' },
+							{ id: '0', text: '审核中' },
+							{ id: '1', text: '审批中' },
+							{ id: '2', text: '已通过' },
+						]
+					},
+					proj_id: {
+						name: '工程类型',
+						multipal: true,
+						args: [],
+						options: [
+							{ text: '全部' },
+							{ id: '010', text: '道路工程' },
+							{ id: '020', text: '铁路工程' },
+							{ id: '040', text: '机场工程' },
+							{ id: '050', text: '隧道工程' },
+							{ id: '050', text: '桥梁工程' },
+							{ id: '050', text: '其它工程' }
+						]
+					}
+				}
+		  },
+			methods: {
+				// 使用事件委托, 优化内存, 提高性能
+				filterChange (e) {
+					let node = e.target
+					let selected = node.getAttribute('data-valid')
+					let selected_map = selected.split(' >> ')
+					let key = selected_map[0], id = selected_map[1]
+					let card = this.config[key]
+					if (id === 'undefined') { // 选中全部
+						card.args = []
+					} else {
+						if (card.args.indexOf(id) !== -1) { // 查得该 id 已选过
+							let del_index = card.args.indexOf(id)
+							// 多选则删除指定下标, 单选则直接置空
+							card.multipal ? card.args.splice(del_index, 1) : card.args = []
+						} else { // id 未被选过
+							// 多选则添加, 单选则直接覆盖
+							card.multipal ? card.args.push(id) : card.args = [id]
+						}
+					}
+					card.args.length && (this.ajaxArgs[key] = card.args.join(','))
+					!card.args.length && delete this.ajaxArgs[key]
+					this.$alert(
+						'所选参数为：<br>' + Object.keys(this.ajaxArgs).map(key => `${key}=${this.ajaxArgs[key]}`).join('<br>'),
+						{ dangerouslyUseHTMLString: true },
+					)
+				}
+			}
+		})
+		</script>
+	</body>
+</html>

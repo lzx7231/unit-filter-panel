@@ -119,7 +119,7 @@
 		  el: '#app',
 		  data: {
 		    activeNames: ['time_period', 'state_id', 'proj_id'],
-				ajaxArgs: {}, // 最终传参
+				ajaxArgs: { time_period: '0.5' }, // 最终传参
 				config: {
 					time_period: {
 						name: '时间段',	 // 折叠卡标题
@@ -174,7 +174,7 @@
 					} else {
 						if (card.args.indexOf(id) !== -1) { // 查得该 id 已选过
 							let del_index = card.args.indexOf(id)
-							// 多选则删除指定下标, 单选则直接置空
+							// 多选则删除指定下标, 单选则直接置空 / 覆盖, 此处应分两种情况, 单选是否为必选, 必选则覆盖, 非必选则置空, 此处我做置空处理
 							card.multipal ? card.args.splice(del_index, 1) : card.args = []
 						} else { // id 未被选过
 							// 多选则添加, 单选则直接覆盖
